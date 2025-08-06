@@ -20,8 +20,8 @@ func NewSetHandler(setService service.SetService) *SetHandler {
 	}
 }
 
-// CreateSetWithParts handles POST /sets/with-parts
-func (h *SetHandler) CreateSetWithParts(c *gin.Context) {
+// CreateSet handles POST /sets
+func (h *SetHandler) CreateSet(c *gin.Context) {
 	var req struct {
 		SetNum string `json:"set_num" binding:"required"`
 	}

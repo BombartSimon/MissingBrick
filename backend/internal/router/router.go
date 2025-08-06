@@ -55,7 +55,7 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			sets.GET("/:id/missing-parts", r.setHandler.GetSetWithMissingParts)
 			sets.GET("/:id/with-parts", r.setHandler.GetSetWithParts)
 			// POST
-			sets.POST("/with-parts", r.setHandler.CreateSetWithParts)
+			sets.POST("", r.setHandler.CreateSet)
 			sets.POST("/sync", r.setHandler.SyncSetFromRebrickable)
 			// PUT
 			sets.PUT("/:id", r.setHandler.UpdateSet)
