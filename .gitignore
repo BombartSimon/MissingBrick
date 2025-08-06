@@ -1,0 +1,4 @@
+.vscode
+personal/
+.env
+*.db

@@ -1,0 +1,21 @@
+meta {
+  name: Create Set With Parts
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{BASE_URL}}/{{BASE_PATH}}/with-parts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "set_num": "75349-1"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,19 @@
+meta {
+  name: By Set Num
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{BASE_URL}}/{{BASE_PATH}}/by-num/:setNum
+  body: none
+  auth: inherit
+}
+
+params:path {
+  setNum: 75349-1
+}
+
+settings {
+  encodeUrl: true
+}

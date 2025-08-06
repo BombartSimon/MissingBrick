@@ -1,0 +1,27 @@
+meta {
+  name: Assign Missing Parts To Set
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{BASE_URL}}/{{BASE_PATH}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "set_id": 1,
+    "part_requests": [
+      {
+        "set_part_id": 9,
+        "quantity": 5
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,19 @@
+meta {
+  name: By id With Parts
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{BASE_URL}}/{{BASE_PATH}}/:id/with-parts
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+settings {
+  encodeUrl: true
+}
