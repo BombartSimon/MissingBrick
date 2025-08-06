@@ -1,5 +1,7 @@
 # MissingBrick - LEGO Set and Parts Tracker
 
+![logo](./logo.png)
+
 A Go-based application to track LEGO sets and missing parts using the Rebrickable API. The application is fully functional and ready to use through its REST API endpoints.
 
 ## Status
@@ -211,4 +213,3 @@ Possible future enhancements:
 ## Contributing
 
 Feel free to submit issues and enhancement requests! The API is stable and ready for frontend development or integration with other tools.
-# MissingBrick
