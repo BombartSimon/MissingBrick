@@ -1,4 +1,5 @@
 import { Routes, Route, Link } from 'react-router-dom'
+import ApiTest from './components/ApiTest'
 import './App.css'
 import SetsPage from './pages/sets'
 
@@ -45,7 +46,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             <div>
-              {/* <ApiTest /> */}
+              <ApiTest />
               <div>
                 <h2>Welcome to MissingBrick</h2>
                 <p>Your LEGO collection management tool</p>

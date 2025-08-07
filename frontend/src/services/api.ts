@@ -29,7 +29,7 @@ const healthClient = axios.create({
 
 // Sets API
 export const setsApi = {
-    getAll: () => apiv1.get<Set[]>('/sets'),
+    getAll: () => apiv1.get<{ sets: Set[] }>('/sets'),
     getById: (id: number) => apiv1.get<Set>(`/sets/${id}`),
     getByIdWithParts: (id: number) => apiv1.get<SetWithParts>(`/sets/${id}/with-parts`),
     getBySetNum: (setNum: string) => apiv1.get<Set>(`/sets/by-num/${setNum}`),
