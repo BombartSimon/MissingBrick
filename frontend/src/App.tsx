@@ -1,30 +1,46 @@
 import { Routes, Route, Link } from 'react-router-dom'
-import ApiTest from './components/ApiTest'
 import './App.css'
 import SetsPage from './pages/sets'
+import ThemeSwitcher from './components/daisy/ThemeSwitcher'
 
 function App() {
   return (
     <div className="min-h-screen bg-base-100">
-      <header className="bg-base-200 p-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-base-content">MissingBrick - LEGO Set Tracker</h1>
-          <p className="text-base-content/70 mt-2">Track your LEGO sets and missing parts</p>
-
-          <nav className="mt-4 flex gap-4 justify-center">
-            <Link
-              to="/"
-              className="btn btn-primary"
-            >
-              Home
-            </Link>
-            <Link
-              to="/sets"
-              className="btn btn-secondary"
-            >
-              Sets
-            </Link>
-          </nav>
+      <header className="bg-base-200 shadow-md">
+        <div className="navbar max-w-6xl mx-auto px-4">
+          <div className="navbar-start">
+            <div className="hidden md:flex">
+              <Link to="/" className="text-2xl font-bold text-primary">
+                MissingBrick
+              </Link>
+            </div>
+            <div className="dropdown md:hidden">
+              <label tabIndex={0} className="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+              </label>
+              <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
+                <li><Link to="/">Home</Link></li>
+                <li><Link to="/sets">Sets</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="navbar-center">
+            <div className="hidden md:flex">
+              <ul className="menu menu-horizontal px-1">
+                <li><Link to="/" className="btn btn-ghost">Home</Link></li>
+                <li><Link to="/sets" className="btn btn-ghost">Sets</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="navbar-end">
+            <ThemeSwitcher />
+          </div>
+        </div>
+        <div className="text-center py-4 bg-base-300/30">
+          <h1 className="text-3xl font-bold text-base-content">LEGO Set Tracker</h1>
+          <p className="text-base-content/70 mt-1">Track your LEGO sets and missing parts</p>
         </div>
       </header>
 
@@ -32,7 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             <div className="space-y-6">
-              <ApiTest />
+              {/* <ApiTest /> */}
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                   <h2 className="card-title">Welcome to MissingBrick</h2>
