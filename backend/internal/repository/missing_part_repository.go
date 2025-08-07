@@ -13,8 +13,8 @@ type MissingPartsRepository interface {
 	GetAll() ([]entity.MissingPart, error)
 	Update(missingPart *entity.MissingPart) error
 	Delete(id uint) error
-	MarkAsFound(id uint) error
-	MarkAsMissing(id uint) error
+	MarkAsFound(setID uint, partID uint) error
+	MarkAsMissing(setID uint, partID uint) error
 	GetMissingBySetID(setID uint) ([]entity.MissingPart, error)
 }
 
@@ -67,14 +67,13 @@ func (r *missingPartRepository) Delete(id uint) error {
 	return r.db.Delete(&entity.MissingPart{}, id).Error
 }
 
-// MarkAsFound marks a missing part as found
-func (r *missingPartRepository) MarkAsFound(id uint) error {
-	return r.db.Model(&entity.MissingPart{}).Where("id = ?", id).Update("is_missing", false).Error
+// MarkAsFound marks a part as found
+func (r *missingPartRepository) MarkAsFound(setID uint, partID uint) error {
+	return r.db.Model(&entity.MissingPart{}).Where("set_id = ? AND part_id = ?", setID, partID).Update("is_missing", false).Error
 }
 
-// MarkAsMissing marks a part as missing
-func (r *missingPartRepository) MarkAsMissing(id uint) error {
-	return r.db.Model(&entity.MissingPart{}).Where("id = ?", id).Update("is_missing", true).Error
+func (r *missingPartRepository) MarkAsMissing(setID uint, partID uint) error {
+	return r.db.Model(&entity.MissingPart{}).Where("set_id = ? AND part_id = ?", setID, partID).Update("is_missing", true).Error
 }
 
 // GetMissingBySetID retrieves only the missing parts for a specific set

@@ -70,6 +70,9 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			missingParts.POST("", r.missingPartsHandler.AssignMissingPartsToSet)
 			// GET
 			missingParts.GET("/:set_id", r.missingPartsHandler.GetMissingPartsBySetID)
+			// DELETE
+			missingParts.DELETE("/:missing_part_id", r.missingPartsHandler.DeleteMissingPart)
+
 		}
 
 		// TODO: Add part routes
