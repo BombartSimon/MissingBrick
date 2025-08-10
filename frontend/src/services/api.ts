@@ -35,7 +35,6 @@ export const setsApi = {
     getByIdWithParts: (id: number) => apiv1.get<SetWithParts>(`/sets/${id}/with-parts`),
     getBySetNum: (setNum: string) => apiv1.get<Set>(`/sets/by-num/${setNum}`),
     create: (data: CreateSetRequest) => apiv1.post<Set>('/sets', data),
-    createWithParts: (data: CreateSetRequest) => apiv1.post<SetWithParts>('/sets/with-parts', data),
     update: (id: number, data: Partial<Set>) => apiv1.put<Set>(`/sets/${id}`, data),
     delete: (id: number) => apiv1.delete(`/sets/${id}`),
 };

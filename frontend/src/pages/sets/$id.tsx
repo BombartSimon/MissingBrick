@@ -200,7 +200,7 @@ export default function SetDetailsPage() {
     }
 
     const missingPartsCount = missingParts.reduce((sum, mp) => sum + mp.quantity, 0);
-    const totalParts = set.parts?.reduce((sum, part) => sum + part.quantity, 0) || 0;
+    const totalParts = set.set_parts?.reduce((sum, part) => sum + part.quantity, 0) || 0;
 
     return (
         <div className="container mx-auto p-6">
@@ -314,7 +314,7 @@ export default function SetDetailsPage() {
                     className={`tab ${activeTab === 'parts' ? 'tab-active' : ''}`}
                     onClick={() => setActiveTab('parts')}
                 >
-                    All Parts ({set.parts?.length || 0})
+                    All Parts ({set.set_parts?.length || 0})
                 </button>
                 <button
                     className={`tab ${activeTab === 'missing' ? 'tab-active' : ''}`}
@@ -365,7 +365,7 @@ export default function SetDetailsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {set.parts?.map((setPart) => (
+                                    {set.set_parts?.map((setPart) => (
                                         <tr key={setPart.id}>
                                             <td>
                                                 <div className="flex items-center gap-3">

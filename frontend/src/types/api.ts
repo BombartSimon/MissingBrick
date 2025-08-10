@@ -49,7 +49,7 @@ export interface MissingPart {
 }
 
 export interface SetWithParts extends Set {
-    parts?: SetPart[];
+    set_parts?: SetPart[];
 }
 
 export interface CreateSetRequest {

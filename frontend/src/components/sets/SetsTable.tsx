@@ -8,6 +8,7 @@ interface SetsTableProps {
 
 export default function SetsTable({ sets, onSetDetailsClick }: SetsTableProps) {
     return (
+
         <div className="overflow-x-auto">
             <table className="table">
                 <thead>
