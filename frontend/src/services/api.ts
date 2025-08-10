@@ -5,7 +5,8 @@ import type {
     MissingPart,
     CreateSetRequest,
     AssignMissingPartsRequest,
-    ApiResponse
+    ApiResponse,
+    SetPart
 } from '../types/api';
 
 // Get API base URL from environment variable or fallback to default
@@ -39,10 +40,16 @@ export const setsApi = {
     delete: (id: number) => apiv1.delete(`/sets/${id}`),
 };
 
+// Set Parts Api
+export const setPartsApi = {
+    getBySetId: (setId: number) => apiv1.get<{ set_parts: SetPart[] }>(`/set-parts/${setId}`),
+};
+
 // Missing Parts API
 export const missingPartsApi = {
     getBySetId: (setId: number) => apiv1.get<MissingPart[]>(`/missing-parts/${setId}`),
     assign: (data: AssignMissingPartsRequest) => apiv1.post<ApiResponse<string>>('/missing-parts', data),
+    delete: (missingPartId: number) => apiv1.delete(`/missing-parts/${missingPartId}`),
 };
 
 // Health Check (uses base URL without /api/v1)

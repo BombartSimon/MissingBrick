@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Set } from '../../types/api';
 import SetAvatar from './SetAvatar';
 
@@ -6,11 +7,7 @@ interface SetTableRowProps {
     onDetailsClick?: (set: Set) => void;
 }
 
-export default function SetTableRow({ set, onDetailsClick }: SetTableRowProps) {
-    const handleDetailsClick = () => {
-        onDetailsClick?.(set);
-    };
-
+export default function SetTableRow({ set }: SetTableRowProps) {
     return (
         <tr key={set.id}>
             <td>
@@ -19,12 +16,12 @@ export default function SetTableRow({ set, onDetailsClick }: SetTableRowProps) {
             <td>{set.set_num}</td>
             <td>{set.year}</td>
             <th>
-                <button
+                <Link
+                    to={`/sets/${set.id}`}
                     className="btn btn-ghost btn-xs"
-                    onClick={handleDetailsClick}
                 >
                     details
-                </button>
+                </Link>
             </th>
         </tr>
     );

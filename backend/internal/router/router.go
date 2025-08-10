@@ -8,13 +8,15 @@ import (
 // Router holds all the handlers
 type Router struct {
 	setHandler          *handler.SetHandler
+	setPartsHandler     *handler.SetPartsHandler
 	missingPartsHandler *handler.MissingPartsHandler
 }
 
 // NewRouter creates a new router with all handlers
-func NewRouter(setHandler *handler.SetHandler, missingPartsHandler *handler.MissingPartsHandler) *Router {
+func NewRouter(setHandler *handler.SetHandler, setPartsHandler *handler.SetPartsHandler, missingPartsHandler *handler.MissingPartsHandler) *Router {
 	return &Router{
 		setHandler:          setHandler,
+		setPartsHandler:     setPartsHandler,
 		missingPartsHandler: missingPartsHandler,
 	}
 }
@@ -73,6 +75,13 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			// DELETE
 			missingParts.DELETE("/:missing_part_id", r.missingPartsHandler.DeleteMissingPart)
 
+		}
+
+		// Set Parts routes
+		setParts := v1.Group("/set-parts")
+		{
+			// GET
+			setParts.GET("/:id", r.setPartsHandler.GetSetParts)
 		}
 
 		// TODO: Add part routes

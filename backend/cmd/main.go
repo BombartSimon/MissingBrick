@@ -48,9 +48,14 @@ func main() {
 	// Initialize handlers
 	setHandler := handler.NewSetHandler(setService)
 	missingPartsHandler := handler.NewMissingPartsHandler(missingPartsService)
+	setPartsHandler := handler.NewSetPartsHandler(setPartService)
 
 	// Initialize router
-	r := router.NewRouter(setHandler, missingPartsHandler)
+	r := router.NewRouter(
+		setHandler,
+		setPartsHandler,
+		missingPartsHandler,
+	)
 	engine := r.SetupRoutes()
 
 	// Start server

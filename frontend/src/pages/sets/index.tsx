@@ -29,13 +29,9 @@ export default function SetsPage() {
 
     }, []);
 
-    const handleSetDetailsClick = (set: Set) => {
-        console.log('Details clicked for set:', set);
-        // TODO: Navigate to set details page or open modal
-    };
+
 
     return <SetsTable
         sets={setsData}
-        onSetDetailsClick={handleSetDetailsClick}
     />;
 }

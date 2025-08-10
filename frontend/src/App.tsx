@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import './App.css'
 import SetsPage from './pages/sets'
+import SetDetailsPage from './pages/sets/$id'
 import ThemeSwitcher from './components/daisy/ThemeSwitcher'
 
 function App() {
@@ -69,6 +70,7 @@ function App() {
           } />
 
           <Route path="/sets" element={<SetsPage />} />
+          <Route path="/sets/:id" element={<SetDetailsPage />} />
 
           {/* Fallback route */}
           <Route path="*" element={
