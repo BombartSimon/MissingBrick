@@ -56,3 +56,20 @@ func (h *MissingPartsHandler) GetMissingPartsBySetID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, missingParts)
 }
+
+func (h *MissingPartsHandler) DeleteMissingPart(c *gin.Context) {
+	missingPartIDStr := c.Param("missing_part_id")
+	missingPartID, err := strconv.Atoi(missingPartIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid missing part ID"})
+		return
+	}
+
+	err = h.missingPartsService.DeleteMissingPart(missingPartID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Missing part deleted successfully"})
+}

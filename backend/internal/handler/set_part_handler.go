@@ -9,20 +9,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SetPartHandler handles HTTP requests for set parts
-type SetPartHandler struct {
+// SetPartsHandler handles HTTP requests for set parts
+type SetPartsHandler struct {
 	setPartService service.SetPartService
 }
 
-// NewSetPartHandler creates a new set part handler
-func NewSetPartHandler(setPartService service.SetPartService) *SetPartHandler {
-	return &SetPartHandler{
+// NewSetPartsHandler creates a new set part handler
+func NewSetPartsHandler(setPartService service.SetPartService) *SetPartsHandler {
+	return &SetPartsHandler{
 		setPartService: setPartService,
 	}
 }
 
 // GetSetParts handles GET /sets/:id/parts
-func (h *SetPartHandler) GetSetParts(c *gin.Context) {
+func (h *SetPartsHandler) GetSetParts(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -40,7 +40,7 @@ func (h *SetPartHandler) GetSetParts(c *gin.Context) {
 }
 
 // SyncSetParts handles POST /sets/:id/sync-parts
-func (h *SetPartHandler) SyncSetParts(c *gin.Context) {
+func (h *SetPartsHandler) SyncSetParts(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -67,7 +67,7 @@ func (h *SetPartHandler) SyncSetParts(c *gin.Context) {
 }
 
 // CreateSetPart handles POST /set-parts
-func (h *SetPartHandler) CreateSetPart(c *gin.Context) {
+func (h *SetPartsHandler) CreateSetPart(c *gin.Context) {
 	var req struct {
 		SetID     uint   `json:"set_id" binding:"required"`
 		PartID    uint   `json:"part_id" binding:"required"`

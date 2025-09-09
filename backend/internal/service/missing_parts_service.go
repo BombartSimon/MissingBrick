@@ -10,6 +10,8 @@ import (
 type MissingPartsService interface {
 	AssignMissingPartsToSet(setID int, partRequests []MissingPartRequest) ([]*entity.MissingPart, error)
 	GetMissingPartsBySetID(setID int) ([]entity.MissingPart, error)
+	MarkPartAsFound(setID int, partID int) error
+	DeleteMissingPart(missingPartID int) error
 }
 
 type MissingPartRequest struct {
@@ -85,4 +87,22 @@ func (s *missingPartsService) GetMissingPartsBySetID(setID int) ([]entity.Missin
 	}
 
 	return missingParts, nil
+}
+
+func (s *missingPartsService) MarkPartAsFound(setID int, partID int) error {
+	err := s.missingPartsRepo.MarkAsFound(uint(setID), uint(partID))
+	if err != nil {
+		return fmt.Errorf("failed to mark part as found: %w", err)
+	}
+
+	return nil
+}
+
+func (s *missingPartsService) DeleteMissingPart(missingPartID int) error {
+	err := s.missingPartsRepo.Delete(uint(missingPartID))
+	if err != nil {
+		return fmt.Errorf("failed to delete missing part: %w", err)
+	}
+
+	return nil
 }
