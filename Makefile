@@ -1,35 +1,22 @@
-.PHONY: build run clean test deps
+.PHONY: build run start-backend start-frontend install-frontend-deps clean test deps help
 
-# Build the application
-build:
-	cd backend && go build -o bin/missing-brick cmd/main.go
+# Start backend only (foreground)
+start-backend:
+	@cd backend && go run cmd/main.go
 
-# Run the application
-run:
-	cd backend && go run cmd/main.go
+# Start frontend only (foreground)
+start-frontend:
+	@cd frontend && npm run dev
 
-# Install dependencies
-deps:
-	cd backend && go mod tidy
-
-# Clean build artifacts
-clean:
-	cd backend && rm -rf bin/
-
-# Run tests
-test:
-	cd backend && go test ./...
-
-# Run with example environment
-run-example:
-	cd backend && REBRICKABLE_API_KEY=your_api_key_here DATABASE_URL=missing_brick.db PORT=8080 go run cmd/main.go
+# Install frontend dependencies
+install-frontend-deps:
+	@cd frontend && npm install
 
 # Help
 help:
 	@echo "Available commands:"
-	@echo "  build        - Build the application"
-	@echo "  run          - Run the application"
-	@echo "  deps         - Install dependencies"
-	@echo "  clean        - Clean build artifacts"
-	@echo "  test         - Run tests"
-	@echo "  run-example  - Run with example environment variables"
+	@echo "  run                          - Start backend (background) and frontend (foreground)"
+	@echo "  start-backend                - Start backend only (foreground)"
+	@echo "  start-frontend               - Start frontend only (foreground)"
+	@echo "  install-frontend-deps        - Run 'npm install' in frontend"
+	@echo "  clean                        - (no-op) placeholder"
