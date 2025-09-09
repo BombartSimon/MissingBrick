@@ -21,6 +21,8 @@ export interface Part {
     part_cat_id: number;
     part_url: string;
     part_img_url: string;
+    external_ids: string;
+    print_of: string;
     created_at: string;
     updated_at: string;
 }
@@ -41,11 +43,17 @@ export interface SetPart {
 export interface MissingPart {
     id: number;
     set_id: number;
-    set_part_id: number;
+    part_id: number;
+    color_id: number;
+    color_name: string;
+    color_hex: string;
     quantity: number;
+    is_missing: boolean;
+    notes: string;
     created_at: string;
     updated_at: string;
-    set_part?: SetPart;
+    set?: Set;
+    part?: Part;
 }
 
 export interface SetWithParts extends Set {
