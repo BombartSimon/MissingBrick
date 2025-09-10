@@ -271,6 +271,18 @@ export default function SetDetailsPage() {
                                         >
                                             Found
                                         </button>
+                                        <a
+                                            href={`https://www.lego.com/en-be/pick-and-build/pick-a-brick?icmp=PAB_All_Pieces&query=${encodeURIComponent(missingPart.part?.part_num || '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={`Buy ${missingPart.part?.part_num} on LEGO pick-and-build`}
+                                            className="btn btn-outline btn-sm flex items-center gap-2 transition-colors hover:bg-base-200"
+                                        >
+                                            <span>Buy</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3h7v7m0 0L10 21l-7-7 11-11z" />
+                                            </svg>
+                                        </a>
                                     </div>
                                 </div>
                             ))}
@@ -354,6 +366,9 @@ export default function SetDetailsPage() {
                                                             </div>
                                                             <div className="text-sm opacity-70">
                                                                 #{setPart.part?.part_num}
+                                                            </div>
+                                                            <div className='text-sm opacity-70 flex items-center gap-2'>
+                                                                {setPart.color_name}
                                                             </div>
                                                         </div>
                                                     </div>
