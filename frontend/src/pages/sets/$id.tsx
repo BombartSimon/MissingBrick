@@ -214,6 +214,16 @@ export default function SetDetailsPage() {
                                     <div className="stat-value text-success">{completionPercentage}%</div>
                                 </div>
                             </div>
+                            <div className="mt-4">
+                                <a
+                                    href={`https://www.lego.com/en-be/service/building-instructions/${set.set_num.replace(/-1$/, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-outline btn-sm"
+                                >
+                                    View Building Instructions
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

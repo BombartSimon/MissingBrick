@@ -205,12 +205,29 @@ export default function SetsPage() {
                                             <span className="text-sm text-base-content/70">
                                                 {set.num_parts} parts
                                             </span>
+                                            <div className="ml-auto flex-shrink-0">
+                                                <a
+                                                    href={`https://www.lego.com/en-be/service/building-instructions/${encodeURIComponent(set.set_num.replace(/-1$/, ''))}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-outline btn-sm normal-case hover:bg-base-200 transition-colors focus:ring focus:ring-primary/30"
+                                                    title={`View building instructions for ${set.set_num}`}
+                                                    aria-label={`View building instructions for ${set.set_num}`}
+                                                    // prevent the parent Link from receiving the click (mouse + keyboard)
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.stopPropagation();
+                                                        }
+                                                    }}
+                                                >
+                                                    View Building Instructions
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="text-base-content/50">
-                                        →
-                                    </div>
                                 </div>
                             </div>
                         </Link>
