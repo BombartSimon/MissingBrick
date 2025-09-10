@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { setsApi, missingPartsApi } from '../../services/api';
 import type { SetWithParts, MissingPart } from '../../types/api';
+import ImageLightbox from '../../components/ImageLightbox';
 
 export default function SetDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -13,6 +14,11 @@ export default function SetDetailsPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showOnlyMissing, setShowOnlyMissing] = useState(false);
+
+    // Lightbox state
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+    const [lightboxAlt, setLightboxAlt] = useState<string>('');
 
     useEffect(() => {
         if (!id) return;
@@ -171,6 +177,14 @@ export default function SetDetailsPage() {
                                     onError={(e) => {
                                         e.currentTarget.src = '/api/placeholder/192/192';
                                     }}
+                                    className="object-cover w-full h-full cursor-zoom-in"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setLightboxImage(set.set_img_url || '/api/placeholder/80/80');
+                                        setLightboxAlt(set.name);
+                                        setLightboxOpen(true);
+                                    }}
                                 />
                             </div>
                         </div>
@@ -222,6 +236,17 @@ export default function SetDetailsPage() {
                                                 <img
                                                     src={missingPart.part?.part_img_url || '/api/placeholder/64/64'}
                                                     alt={missingPart.part?.name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = '/api/placeholder/64/64';
+                                                    }}
+                                                    className="object-cover w-full h-full cursor-zoom-in"
+                                                    onClick={() => {
+                                                        if (missingPart.part?.part_img_url) {
+                                                            setLightboxImage(missingPart.part.part_img_url);
+                                                            setLightboxAlt(missingPart.part.name || '');
+                                                            setLightboxOpen(true);
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -309,6 +334,17 @@ export default function SetDetailsPage() {
                                                                 <img
                                                                     src={setPart.part?.part_img_url || '/api/placeholder/48/48'}
                                                                     alt={setPart.part?.name}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.src = '/api/placeholder/48/48';
+                                                                    }}
+                                                                    className="object-cover w-full h-full cursor-zoom-in"
+                                                                    onClick={() => {
+                                                                        if (setPart.part?.part_img_url) {
+                                                                            setLightboxImage(setPart.part.part_img_url);
+                                                                            setLightboxAlt(setPart.part.name || '');
+                                                                            setLightboxOpen(true);
+                                                                        }
+                                                                    }}
                                                                 />
                                                             </div>
                                                         </div>
@@ -367,6 +403,16 @@ export default function SetDetailsPage() {
                     )}
                 </div>
             </div>
+            <ImageLightbox
+                imageUrl={lightboxImage || ''}
+                alt={lightboxAlt}
+                open={lightboxOpen}
+                onClose={() => {
+                    setLightboxOpen(false);
+                    setLightboxImage(null);
+                    setLightboxAlt('');
+                }}
+            />
         </div>
     );
 }

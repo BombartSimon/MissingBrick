@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { setsApi } from '../../services/api';
 import type { Set } from '../../types/api';
+import ImageLightbox from '../../components/ImageLightbox';
 
 export default function SetsPage() {
     const [sets, setSets] = useState<Set[]>([]);
@@ -11,6 +12,11 @@ export default function SetsPage() {
     const [yearFilter, setYearFilter] = useState('');
     const [newSetNum, setNewSetNum] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+
+    // Lightbox state
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+    const [lightboxAlt, setLightboxAlt] = useState<string>('');
 
     useEffect(() => {
         fetchSets();
@@ -173,6 +179,14 @@ export default function SetsPage() {
                                                 onError={(e) => {
                                                     e.currentTarget.src = '/api/placeholder/80/80';
                                                 }}
+                                                className="object-cover w-full h-full cursor-zoom-in"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setLightboxImage(set.set_img_url || '/api/placeholder/80/80');
+                                                    setLightboxAlt(set.name);
+                                                    setLightboxOpen(true);
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -203,6 +217,16 @@ export default function SetsPage() {
                     ))}
                 </div>
             )}
+            <ImageLightbox
+                imageUrl={lightboxImage || ''}
+                alt={lightboxAlt}
+                open={lightboxOpen}
+                onClose={() => {
+                    setLightboxOpen(false);
+                    setLightboxImage(null);
+                    setLightboxAlt('');
+                }}
+            />
         </div>
     );
 }
