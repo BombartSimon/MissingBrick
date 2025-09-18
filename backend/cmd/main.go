@@ -49,12 +49,14 @@ func main() {
 	setHandler := handler.NewSetHandler(setService)
 	missingPartsHandler := handler.NewMissingPartsHandler(missingPartsService)
 	setPartsHandler := handler.NewSetPartsHandler(setPartService)
+	searchHandler := handler.NewSearchHandler(rebrickableService)
 
 	// Initialize router
 	r := router.NewRouter(
 		setHandler,
 		setPartsHandler,
 		missingPartsHandler,
+		searchHandler,
 	)
 	engine := r.SetupRoutes()
 

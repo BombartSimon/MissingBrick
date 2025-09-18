@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { setsApi } from '../../services/api';
-import type { Set } from '../../types/api';
+import type { Set, RebrickableSet } from '../../types/api';
 import ImageLightbox from '../../components/ImageLightbox';
+import SetSearch from '../../components/SetSearch';
 
 export default function SetsPage() {
     const [sets, setSets] = useState<Set[]>([]);
@@ -10,8 +11,8 @@ export default function SetsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [yearFilter, setYearFilter] = useState('');
-    const [newSetNum, setNewSetNum] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+    const [selectedRebrickableSet, setSelectedRebrickableSet] = useState<RebrickableSet | null>(null);
 
     // Lightbox state
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -39,6 +40,8 @@ export default function SetsPage() {
         }
     };
 
+
+
     const filterSets = () => {
         let filtered = sets.filter(set => {
             const matchesSearch = set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,15 +53,13 @@ export default function SetsPage() {
         setFilteredSets(filtered);
     };
 
-    const handleCreateSet = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newSetNum.trim()) return;
-
+    const handleCreateSet = async (rebrickableSet: RebrickableSet) => {
         try {
             setIsAdding(true);
-            await setsApi.create({ set_num: newSetNum.trim() });
-            setNewSetNum('');
+            setSelectedRebrickableSet(rebrickableSet);
+            await setsApi.create({ set_num: rebrickableSet.set_num });
             await fetchSets();
+            setSelectedRebrickableSet(null);
         } catch (error) {
             console.error('Error creating set:', error);
             alert('Failed to create set. Please check if the set number exists.');
@@ -91,27 +92,37 @@ export default function SetsPage() {
             <div className="card bg-base-200 shadow-lg mb-8">
                 <div className="card-body">
                     <h3 className="card-title">Add New Set</h3>
-                    <form onSubmit={handleCreateSet} className="flex gap-3">
-                        <input
-                            type="text"
-                            placeholder="Enter set number (e.g., 75354)"
-                            className="input input-bordered flex-1"
-                            value={newSetNum}
-                            onChange={(e) => setNewSetNum(e.target.value)}
+                    <div className="flex flex-col gap-3">
+                        <SetSearch
+                            onSelectSet={handleCreateSet}
+                            placeholder="Search for LEGO sets to add..."
                             disabled={isAdding}
                         />
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={isAdding || !newSetNum.trim()}
-                        >
-                            {isAdding ? (
-                                <span className="loading loading-spinner loading-sm"></span>
-                            ) : (
-                                'Add'
-                            )}
-                        </button>
-                    </form>
+                        {selectedRebrickableSet && (
+                            <div className="p-3 bg-base-100 rounded-lg border">
+                                <div className="flex items-center gap-3 mb-2">
+                                    {selectedRebrickableSet.set_img_url && (
+                                        <div className="avatar">
+                                            <div className="w-12 h-12 rounded">
+                                                <img
+                                                    src={selectedRebrickableSet.set_img_url}
+                                                    alt={selectedRebrickableSet.name}
+                                                    className="object-cover w-full h-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <div className="font-medium">{selectedRebrickableSet.name}</div>
+                                        <div className="text-sm opacity-70">
+                                            #{selectedRebrickableSet.set_num} • {selectedRebrickableSet.year} • {selectedRebrickableSet.num_parts} parts
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-info">Adding this set to your collection...</div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

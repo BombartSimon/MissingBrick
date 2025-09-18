@@ -10,14 +10,16 @@ type Router struct {
 	setHandler          *handler.SetHandler
 	setPartsHandler     *handler.SetPartsHandler
 	missingPartsHandler *handler.MissingPartsHandler
+	searchHandler       *handler.SearchHandler
 }
 
 // NewRouter creates a new router with all handlers
-func NewRouter(setHandler *handler.SetHandler, setPartsHandler *handler.SetPartsHandler, missingPartsHandler *handler.MissingPartsHandler) *Router {
+func NewRouter(setHandler *handler.SetHandler, setPartsHandler *handler.SetPartsHandler, missingPartsHandler *handler.MissingPartsHandler, searchHandler *handler.SearchHandler) *Router {
 	return &Router{
 		setHandler:          setHandler,
 		setPartsHandler:     setPartsHandler,
 		missingPartsHandler: missingPartsHandler,
+		searchHandler:       searchHandler,
 	}
 }
 
@@ -65,6 +67,12 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			sets.DELETE("/:id", r.setHandler.DeleteSet)
 		}
 
+		// Search routes
+		search := v1.Group("/search")
+		{
+			search.GET("/sets", r.searchHandler.SearchSets)
+		}
+
 		// Missing Parts routes
 		missingParts := v1.Group("/missing-parts")
 		{
@@ -84,29 +92,6 @@ func (r *Router) SetupRoutes() *gin.Engine {
 			setParts.GET("/:id", r.setPartsHandler.GetSetParts)
 		}
 
-		// TODO: Add part routes
-		// parts := v1.Group("/parts")
-		// {
-		//     parts.GET("", r.partHandler.GetAllParts)
-		//     parts.POST("", r.partHandler.CreatePart)
-		//     parts.GET("/:id", r.partHandler.GetPartByID)
-		//     parts.PUT("/:id", r.partHandler.UpdatePart)
-		//     parts.DELETE("/:id", r.partHandler.DeletePart)
-		//     parts.GET("/search", r.partHandler.SearchParts)
-		// }
-
-		// TODO: Add missing part routes
-		// missingParts := v1.Group("/missing-parts")
-		// {
-		//     missingParts.GET("", r.missingPartHandler.GetAllMissingParts)
-		//     missingParts.POST("", r.missingPartHandler.CreateMissingPart)
-		//     missingParts.GET("/:id", r.missingPartHandler.GetMissingPartByID)
-		//     missingParts.PUT("/:id", r.missingPartHandler.UpdateMissingPart)
-		//     missingParts.DELETE("/:id", r.missingPartHandler.DeleteMissingPart)
-		//     missingParts.PUT("/:id/found", r.missingPartHandler.MarkAsFound)
-		//     missingParts.PUT("/:id/missing", r.missingPartHandler.MarkAsMissing)
-		//     missingParts.GET("/set/:setId", r.missingPartHandler.GetMissingPartsBySetID)
-		// }
 	}
 
 	return router

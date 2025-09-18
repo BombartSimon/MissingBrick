@@ -56,6 +56,13 @@ export interface MissingPart {
     part?: Part;
 }
 
+export interface SearchSetsResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: Set[];
+}
+
 export interface SetWithParts extends Set {
     set_parts?: SetPart[];
 }
@@ -80,4 +87,23 @@ export interface ApiResponse<T> {
 export interface ApiError {
     error: string;
     details?: string;
+}
+
+// Rebrickable API Types
+export interface RebrickableSet {
+    set_num: string;
+    name: string;
+    year: number;
+    theme_id: number;
+    num_parts: number;
+    set_img_url: string;
+    set_url: string;
+    last_modified_dt: string;
+}
+
+export interface RebrickableSetResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: RebrickableSet[];
 }

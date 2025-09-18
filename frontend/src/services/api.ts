@@ -6,7 +6,8 @@ import type {
     CreateSetRequest,
     AssignMissingPartsRequest,
     ApiResponse,
-    SetPart
+    SetPart,
+    RebrickableSetResponse
 } from '../types/api';
 
 // Get API base URL from environment variable or fallback to default
@@ -55,5 +56,26 @@ export const missingPartsApi = {
 export const healthApi = {
     check: () => healthClient.get('/health'),
 };
+
+export const searchSets = async (
+    searchTerm: string,
+    page: number = 1,
+    pageSize: number = 20
+): Promise<RebrickableSetResponse> => {
+    const params = new URLSearchParams({
+        search: searchTerm,
+        page: page.toString(),
+        page_size: pageSize.toString(),
+    });
+
+    const response = await fetch(`${apiBaseUrl}/api/${apiVersion}/search/sets?${params}`);
+
+    if (!response.ok) {
+        throw new Error('Failed to search sets');
+    }
+
+    return response.json();
+};
+
 
 export default apiv1;

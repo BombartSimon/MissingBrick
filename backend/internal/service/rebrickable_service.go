@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // RebrickableService handles interactions with Rebrickable API
@@ -11,6 +12,7 @@ type RebrickableService interface {
 	GetSet(setNum string) (*RebrickableSet, error)
 	GetSetParts(setNum string) ([]RebrickableSetPart, error)
 	GetPart(partNum string) (*RebrickablePart, error)
+	SearchSets(searchTerm string, page, pageSize int) (*RebrickableSetResponse, error)
 }
 
 // rebrickableService implements RebrickableService interface
@@ -137,4 +139,45 @@ func (s *rebrickableService) GetPart(partNum string) (*RebrickablePart, error) {
 	}
 
 	return &part, nil
+}
+
+type RebrickableSetResponse struct {
+	Count    int              `json:"count"`
+	Next     *string          `json:"next"`
+	Previous *string          `json:"previous"`
+	Results  []RebrickableSet `json:"results"`
+}
+
+func (s *rebrickableService) SearchSets(searchTerm string, page, pageSize int) (*RebrickableSetResponse, error) {
+	endpoint := fmt.Sprintf("%s/lego/sets/", s.baseURL)
+
+	params := url.Values{}
+	params.Add("search", searchTerm)
+	params.Add("page", fmt.Sprintf("%d", page))
+	params.Add("page_size", fmt.Sprintf("%d", pageSize))
+
+	req, err := http.NewRequest("GET", endpoint+"?"+params.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "key "+s.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var result RebrickableSetResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
