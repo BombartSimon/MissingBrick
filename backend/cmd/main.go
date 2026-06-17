@@ -38,15 +38,17 @@ func main() {
 	partRepo := repository.NewPartRepository(db.DB)
 	setPartRepo := repository.NewSetPartRepository(db.DB)
 	missingPartsRepo := repository.NewMissingPartRepository(db.DB)
+	setPhotoRepo := repository.NewSetPhotoRepository(db.DB)
 
 	// Initialize services
 	rebrickableService := service.NewRebrickableService(cfg.RebrickableAPIKey)
 	setPartService := service.NewSetPartService(setPartRepo, partRepo, rebrickableService)
 	setService := service.NewSetService(setRepo, setPartService, rebrickableService)
 	missingPartsService := service.NewMissingPartsService(missingPartsRepo, setPartRepo)
+	setPhotoService := service.NewSetPhotoService(setRepo, setPhotoRepo, cfg.UploadsDir, cfg.MaxUploadMB)
 
 	// Initialize handlers
-	setHandler := handler.NewSetHandler(setService)
+	setHandler := handler.NewSetHandler(setService, setPhotoService)
 	missingPartsHandler := handler.NewMissingPartsHandler(missingPartsService)
 	setPartsHandler := handler.NewSetPartsHandler(setPartService)
 	searchHandler := handler.NewSearchHandler(rebrickableService)
@@ -57,23 +59,16 @@ func main() {
 		setPartsHandler,
 		missingPartsHandler,
 		searchHandler,
+		cfg.CORSAllowedOrigin,
+		cfg.UploadsDir,
 	)
 	engine := r.SetupRoutes()
 
 	// Start server
 	log.Printf("Starting server on port %s", cfg.Port)
 	log.Printf("Database: %s", cfg.DatabaseURL)
-	log.Printf("Rebrickable API Key: %s...", cfg.RebrickableAPIKey[:min(10, len(cfg.RebrickableAPIKey))])
 
 	if err := engine.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
-}
-
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

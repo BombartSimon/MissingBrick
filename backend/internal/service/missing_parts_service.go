@@ -1,15 +1,20 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/BombartSimon/MissingBrick/internal/entity"
 	"github.com/BombartSimon/MissingBrick/internal/repository"
+	"gorm.io/gorm"
 )
 
 type MissingPartsService interface {
 	AssignMissingPartsToSet(setID int, partRequests []MissingPartRequest) ([]*entity.MissingPart, error)
 	GetMissingPartsBySetID(setID int) ([]entity.MissingPart, error)
+	GetAllMissingParts() ([]entity.MissingPart, error)
+	GetShoppingList() ([]repository.ShoppingListItem, error)
+	UpdateMissingPart(missingPartID int, req UpdateMissingPartRequest) (*entity.MissingPart, error)
 	MarkPartAsFound(setID int, partID int) error
 	DeleteMissingPart(missingPartID int) error
 }
@@ -17,6 +22,11 @@ type MissingPartsService interface {
 type MissingPartRequest struct {
 	SetPartID uint `json:"set_part_id"`
 	Quantity  *int `json:"quantity,omitempty"`
+}
+
+type UpdateMissingPartRequest struct {
+	Quantity *int    `json:"quantity,omitempty"`
+	Notes    *string `json:"notes,omitempty"`
 }
 
 type missingPartsService struct {
@@ -32,33 +42,57 @@ func NewMissingPartsService(missingPartsRepo repository.MissingPartsRepository, 
 }
 
 func (s *missingPartsService) AssignMissingPartsToSet(setID int, partRequests []MissingPartRequest) ([]*entity.MissingPart, error) {
-	var missingParts []*entity.MissingPart
+	if setID <= 0 || len(partRequests) == 0 {
+		return nil, ErrInvalidInput
+	}
 
+	var missingParts []*entity.MissingPart
 	for _, partRequest := range partRequests {
+		if partRequest.SetPartID == 0 {
+			return nil, fmt.Errorf("%w: set_part_id is required", ErrInvalidInput)
+		}
+
 		setPart, err := s.setPartRepo.GetByID(partRequest.SetPartID)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, fmt.Errorf("%w: set part %d", ErrNotFound, partRequest.SetPartID)
+			}
 			return nil, fmt.Errorf("failed to get set part with ID %d: %w", partRequest.SetPartID, err)
 		}
 
 		if setPart.SetID != uint(setID) {
-			return nil, fmt.Errorf("set part %d does not belong to set %d", partRequest.SetPartID, setID)
+			return nil, fmt.Errorf("%w: set part %d does not belong to set %d", ErrInvalidInput, partRequest.SetPartID, setID)
 		}
 
 		missingQuantity := setPart.Quantity
 		if partRequest.Quantity != nil {
 			missingQuantity = *partRequest.Quantity
-
-			if missingQuantity > setPart.Quantity {
-				return nil, fmt.Errorf("missing quantity (%d) cannot be greater than set quantity (%d) for set_part_id %d",
-					missingQuantity, setPart.Quantity, partRequest.SetPartID)
-			}
-
-			if missingQuantity <= 0 {
-				return nil, fmt.Errorf("missing quantity must be positive for set_part_id %d", partRequest.SetPartID)
-			}
+		}
+		if missingQuantity <= 0 {
+			return nil, fmt.Errorf("%w: missing quantity must be positive", ErrInvalidInput)
+		}
+		if missingQuantity > setPart.Quantity {
+			return nil, fmt.Errorf("%w: missing quantity %d cannot be greater than set quantity %d", ErrInvalidInput, missingQuantity, setPart.Quantity)
 		}
 
-		missingPart := &entity.MissingPart{
+		missingPart, err := s.missingPartsRepo.GetActiveByIdentity(uint(setID), setPart.PartID, setPart.ColorID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("failed to check existing missing part: %w", err)
+		}
+
+		if missingPart != nil {
+			missingPart.Quantity = missingQuantity
+			missingPart.ColorName = setPart.ColorName
+			missingPart.ColorHex = setPart.ColorHex
+			missingPart.IsMissing = true
+			if err := s.missingPartsRepo.Update(missingPart); err != nil {
+				return nil, fmt.Errorf("failed to update missing part: %w", err)
+			}
+			missingParts = append(missingParts, missingPart)
+			continue
+		}
+
+		missingPart = &entity.MissingPart{
 			SetID:     uint(setID),
 			PartID:    setPart.PartID,
 			ColorID:   setPart.ColorID,
@@ -67,10 +101,6 @@ func (s *missingPartsService) AssignMissingPartsToSet(setID int, partRequests []
 			Quantity:  missingQuantity,
 			IsMissing: true,
 		}
-
-		// TODO: Vérifier si cette pièce n'est pas déjà marquée comme manquante pour ce set
-		// pour éviter les doublons
-
 		if err := s.missingPartsRepo.Create(missingPart); err != nil {
 			return nil, fmt.Errorf("failed to create missing part: %w", err)
 		}
@@ -81,28 +111,53 @@ func (s *missingPartsService) AssignMissingPartsToSet(setID int, partRequests []
 }
 
 func (s *missingPartsService) GetMissingPartsBySetID(setID int) ([]entity.MissingPart, error) {
-	missingParts, err := s.missingPartsRepo.GetBySetID(uint(setID))
+	if setID <= 0 {
+		return nil, ErrInvalidInput
+	}
+	return s.missingPartsRepo.GetBySetID(uint(setID))
+}
+
+func (s *missingPartsService) GetAllMissingParts() ([]entity.MissingPart, error) {
+	return s.missingPartsRepo.GetAll()
+}
+
+func (s *missingPartsService) GetShoppingList() ([]repository.ShoppingListItem, error) {
+	return s.missingPartsRepo.GetShoppingList()
+}
+
+func (s *missingPartsService) UpdateMissingPart(missingPartID int, req UpdateMissingPartRequest) (*entity.MissingPart, error) {
+	if missingPartID <= 0 {
+		return nil, ErrInvalidInput
+	}
+	missingPart, err := s.missingPartsRepo.GetByID(uint(missingPartID))
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
-
-	return missingParts, nil
+	if req.Quantity != nil {
+		if *req.Quantity <= 0 {
+			return nil, fmt.Errorf("%w: quantity must be positive", ErrInvalidInput)
+		}
+		missingPart.Quantity = *req.Quantity
+	}
+	if req.Notes != nil {
+		missingPart.Notes = *req.Notes
+	}
+	if err := s.missingPartsRepo.Update(missingPart); err != nil {
+		return nil, err
+	}
+	return missingPart, nil
 }
 
 func (s *missingPartsService) MarkPartAsFound(setID int, partID int) error {
-	err := s.missingPartsRepo.MarkAsFound(uint(setID), uint(partID))
-	if err != nil {
-		return fmt.Errorf("failed to mark part as found: %w", err)
-	}
-
-	return nil
+	return s.missingPartsRepo.MarkAsFound(uint(setID), uint(partID))
 }
 
 func (s *missingPartsService) DeleteMissingPart(missingPartID int) error {
-	err := s.missingPartsRepo.Delete(uint(missingPartID))
-	if err != nil {
-		return fmt.Errorf("failed to delete missing part: %w", err)
+	if missingPartID <= 0 {
+		return ErrInvalidInput
 	}
-
-	return nil
+	return s.missingPartsRepo.Delete(uint(missingPartID))
 }

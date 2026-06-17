@@ -1,71 +1,34 @@
 import { useEffect, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { Button } from './ui';
 
-const themes = [
-    'light',
-    'dark',
-    'cupcake',
-    'bumblebee',
-    'emerald',
-    'corporate',
-    'synthwave',
-    'retro',
-    'cyberpunk',
-    'valentine',
-    'halloween',
-    'garden',
-    'forest',
-    'aqua',
-    'lofi',
-    'pastel',
-    'fantasy',
-    'wireframe',
-    'black',
-    'luxury',
-    'dracula',
-    'cmyk',
-    'autumn',
-    'business',
-    'acid',
-    'lemonade',
-    'night',
-    'coffee',
-    'winter'
-];
+type Theme = 'light' | 'dark';
+
+const getInitialTheme = (): Theme => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
 
 export default function ThemeSwitcher() {
-    const [currentTheme, setCurrentTheme] = useState('light');
+    const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setCurrentTheme(savedTheme);
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    }, []);
-
-    const changeTheme = (theme: string) => {
-        setCurrentTheme(theme);
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
         localStorage.setItem('theme', theme);
-    };
+    }, [theme]);
+
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
     return (
-        <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost gap-2">
-                🎨
-                <span className="hidden sm:inline capitalize">{currentTheme}</span>
-            </div>
-            <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-2xl border border-base-300 max-h-96 overflow-y-auto">
-                {themes.map((theme) => (
-                    <li key={theme}>
-                        <button
-                            className={`${currentTheme === theme ? 'active' : ''}`}
-                            onClick={() => changeTheme(theme)}
-                        >
-                            <span className="capitalize">{theme}</span>
-                            {currentTheme === theme && <span className="text-primary">✓</span>}
-                        </button>
-                    </li>
-                ))}
-            </ul>
-        </div>
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(nextTheme)}
+            aria-label={`Switch to ${nextTheme} mode`}
+            title={`Switch to ${nextTheme} mode`}
+        >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
     );
 }

@@ -36,3 +36,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/uploads/
+frontend/dist/

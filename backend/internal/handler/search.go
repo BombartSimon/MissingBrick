@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/BombartSimon/MissingBrick/internal/service"
 	"github.com/gin-gonic/gin"
@@ -13,38 +14,39 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(rebrickableService service.RebrickableService) *SearchHandler {
-	return &SearchHandler{
-		rebrickableService: rebrickableService,
-	}
+	return &SearchHandler{rebrickableService: rebrickableService}
 }
 
 func (h *SearchHandler) SearchSets(c *gin.Context) {
-	searchTerm := c.Query("search")
-	if searchTerm == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "search parameter is required"})
+	searchTerm := strings.TrimSpace(c.Query("search"))
+	if len(searchTerm) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "search parameter must contain at least 2 characters"})
 		return
 	}
 
-	// Optional parameters
-	page := 1
-	if p := c.Query("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil {
-			page = parsed
-		}
-	}
-
-	pageSize := 20
-	if ps := c.Query("page_size"); ps != "" {
-		if parsed, err := strconv.Atoi(ps); err == nil {
-			pageSize = parsed
-		}
+	page := parsePositiveQueryInt(c, "page", 1)
+	pageSize := parsePositiveQueryInt(c, "page_size", 20)
+	if pageSize > 100 {
+		pageSize = 100
 	}
 
 	results, err := h.rebrickableService.SearchSets(searchTerm, page, pageSize)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search sets"})
+		writeError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, results)
+}
+
+func parsePositiveQueryInt(c *gin.Context, key string, fallback int) int {
+	value := c.Query(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 1 {
+		return fallback
+	}
+	return parsed
 }

@@ -19,6 +19,13 @@ type SetService interface {
 	SyncSetFromRebrickable(setNum string) (*entity.Set, error)
 	GetSetWithMissingParts(id uint) (*entity.Set, error)
 	GetSetWithParts(id uint) (*entity.Set, error)
+	UpdateSetNotes(id uint, req UpdateSetNotesRequest) (*entity.Set, error)
+}
+
+type UpdateSetNotesRequest struct {
+	Notes           string `json:"notes"`
+	StorageLocation string `json:"storage_location"`
+	BuildStatus     string `json:"build_status"`
 }
 
 // setService implements SetService interface
@@ -42,7 +49,7 @@ func (s *setService) createSet(setNum string) (*entity.Set, error) {
 	// Check if set already exists
 	existingSet, err := s.setRepo.GetBySetNum(setNum)
 	if err == nil && existingSet != nil {
-		return nil, fmt.Errorf("set with number %s already exists", setNum)
+		return nil, fmt.Errorf("%w: set with number %s already exists", ErrConflict, setNum)
 	}
 
 	// Fetch from Rebrickable
@@ -173,4 +180,36 @@ func (s *setService) GetSetWithParts(id uint) (*entity.Set, error) {
 	}
 
 	return set, nil
+}
+
+func (s *setService) UpdateSetNotes(id uint, req UpdateSetNotesRequest) (*entity.Set, error) {
+	if id == 0 {
+		return nil, ErrInvalidInput
+	}
+	set, err := s.setRepo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	status := normalizeBuildStatus(req.BuildStatus)
+	if status == "" {
+		return nil, fmt.Errorf("%w: invalid build status", ErrInvalidInput)
+	}
+	set.Notes = req.Notes
+	set.StorageLocation = req.StorageLocation
+	set.BuildStatus = status
+	if err := s.setRepo.Update(set); err != nil {
+		return nil, err
+	}
+	return set, nil
+}
+
+func normalizeBuildStatus(value string) string {
+	switch value {
+	case "", "not_started":
+		return "not_started"
+	case "sorting", "building", "blocked", "complete":
+		return value
+	default:
+		return ""
+	}
 }

@@ -10,13 +10,15 @@ import (
 
 // SetHandler handles HTTP requests for sets
 type SetHandler struct {
-	setService service.SetService
+	setService      service.SetService
+	setPhotoService service.SetPhotoService
 }
 
 // NewSetHandler creates a new set handler
-func NewSetHandler(setService service.SetService) *SetHandler {
+func NewSetHandler(setService service.SetService, setPhotoService service.SetPhotoService) *SetHandler {
 	return &SetHandler{
-		setService: setService,
+		setService:      setService,
+		setPhotoService: setPhotoService,
 	}
 }
 
@@ -33,7 +35,7 @@ func (h *SetHandler) CreateSet(c *gin.Context) {
 
 	set, err := h.setService.CreateSetWithParts(req.SetNum)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, err)
 		return
 	}
 
@@ -75,7 +77,7 @@ func (h *SetHandler) GetSetBySetNum(c *gin.Context) {
 func (h *SetHandler) GetAllSets(c *gin.Context) {
 	sets, err := h.setService.GetAllSets()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, err)
 		return
 	}
 
@@ -106,7 +108,7 @@ func (h *SetHandler) UpdateSet(c *gin.Context) {
 
 	err = h.setService.UpdateSet(set)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, err)
 		return
 	}
 
@@ -124,7 +126,7 @@ func (h *SetHandler) DeleteSet(c *gin.Context) {
 
 	err = h.setService.DeleteSet(uint(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, err)
 		return
 	}
 
@@ -144,7 +146,7 @@ func (h *SetHandler) SyncSetFromRebrickable(c *gin.Context) {
 
 	set, err := h.setService.SyncSetFromRebrickable(req.SetNum)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, err)
 		return
 	}
 
@@ -185,4 +187,107 @@ func (h *SetHandler) GetSetWithParts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, set)
+}
+
+// UpdateSetNotes handles PUT /sets/:id/notes
+func (h *SetHandler) UpdateSetNotes(c *gin.Context) {
+	id, ok := parseUintParam(c, "id", "Invalid set ID")
+	if !ok {
+		return
+	}
+	var req service.UpdateSetNotesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	set, err := h.setService.UpdateSetNotes(id, req)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, set)
+}
+
+func (h *SetHandler) GetSetPhotos(c *gin.Context) {
+	id, ok := parseUintParam(c, "id", "Invalid set ID")
+	if !ok {
+		return
+	}
+	photos, err := h.setPhotoService.GetPhotos(id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"photos": photos})
+}
+
+func (h *SetHandler) UploadSetPhoto(c *gin.Context) {
+	id, ok := parseUintParam(c, "id", "Invalid set ID")
+	if !ok {
+		return
+	}
+	file, err := c.FormFile("photo")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "photo file is required"})
+		return
+	}
+	title := c.PostForm("title")
+	isPrimary := c.PostForm("is_primary") == "true" || c.PostForm("is_primary") == "1"
+	photo, err := h.setPhotoService.UploadPhoto(id, file, service.SetPhotoRequest{Title: &title, PhotoType: c.PostForm("photo_type"), IsPrimary: &isPrimary})
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, photo)
+}
+
+func (h *SetHandler) UpdateSetPhoto(c *gin.Context) {
+	setID, ok := parseUintParam(c, "id", "Invalid set ID")
+	if !ok {
+		return
+	}
+	photoID, ok := parseUintParam(c, "photo_id", "Invalid photo ID")
+	if !ok {
+		return
+	}
+	var req struct {
+		Title     *string `json:"title"`
+		PhotoType string  `json:"photo_type"`
+		IsPrimary *bool   `json:"is_primary"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	photo, err := h.setPhotoService.UpdatePhoto(setID, photoID, service.SetPhotoRequest{Title: req.Title, PhotoType: req.PhotoType, IsPrimary: req.IsPrimary})
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, photo)
+}
+
+func (h *SetHandler) DeleteSetPhoto(c *gin.Context) {
+	setID, ok := parseUintParam(c, "id", "Invalid set ID")
+	if !ok {
+		return
+	}
+	photoID, ok := parseUintParam(c, "photo_id", "Invalid photo ID")
+	if !ok {
+		return
+	}
+	if err := h.setPhotoService.DeletePhoto(setID, photoID); err != nil {
+		writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Photo deleted successfully"})
+}
+
+func parseUintParam(c *gin.Context, name string, errorMessage string) (uint, bool) {
+	value, err := strconv.ParseUint(c.Param(name), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+		return 0, false
+	}
+	return uint(value), true
 }

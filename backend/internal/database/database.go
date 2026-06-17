@@ -3,7 +3,6 @@ package database
 import (
 	"log"
 
-	"github.com/BombartSimon/MissingBrick/internal/entity"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -20,18 +19,15 @@ func NewDatabase(databaseURL string) (*Database, error) {
 		return nil, err
 	}
 
-	// Auto migrate the schema
-	err = db.AutoMigrate(
-		&entity.Set{},
-		&entity.Part{},
-		&entity.MissingPart{},
-		&entity.SetPart{},
-	)
+	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
+	if err := runMigrations(sqlDB); err != nil {
+		return nil, err
+	}
 
-	log.Println("Database connected and migrated successfully")
+	log.Println("Database connected and migrations applied successfully")
 
 	return &Database{DB: db}, nil
 }

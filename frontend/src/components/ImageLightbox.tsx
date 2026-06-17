@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
+import { X } from 'lucide-react';
+import { Button } from './ui';
 
 type ImageLightboxProps = {
     imageUrl: string;
@@ -7,48 +9,25 @@ type ImageLightboxProps = {
     onClose: () => void;
 }
 
-
 export default function ImageLightbox({ imageUrl, alt, open, onClose }: ImageLightboxProps) {
-    const altText = alt || '';
-
     useEffect(() => {
         if (!open) return;
-
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
         };
-
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-
     }, [open, onClose]);
 
     if (!open || !imageUrl) return null;
 
-
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-            onClick={onClose}
-            role="dialog"
-            aria-modal="true"
-        >
-            <div
-                className="max-w-full max-h-full rounded-lg overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <button
-                    className="absolute top-4 right-4 btn btn-sm btn-ghost z-50"
-                    onClick={onClose}
-                    aria-label="Close image"
-                >
-                    ✕
-                </button>
-                <img
-                    src={imageUrl}
-                    alt={altText}
-                    className="max-w-[90vw] max-h-[90vh] object-contain block"
-                />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4" onClick={onClose} role="dialog" aria-modal="true">
+            <div className="relative max-h-full max-w-full overflow-hidden rounded-lg" onClick={(event) => event.stopPropagation()}>
+                <Button className="absolute right-3 top-3 bg-white/90 dark:bg-neutral-950/90" variant="secondary" size="icon" onClick={onClose} aria-label="Close image">
+                    <X className="h-4 w-4" />
+                </Button>
+                <img src={imageUrl} alt={alt || ''} className="block max-h-[90vh] max-w-[90vw] object-contain" />
             </div>
         </div>
     );

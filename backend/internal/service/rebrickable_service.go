@@ -2,9 +2,12 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
+	"time"
 )
 
 // RebrickableService handles interactions with Rebrickable API
@@ -15,23 +18,20 @@ type RebrickableService interface {
 	SearchSets(searchTerm string, page, pageSize int) (*RebrickableSetResponse, error)
 }
 
-// rebrickableService implements RebrickableService interface
 type rebrickableService struct {
 	apiKey  string
 	baseURL string
 	client  *http.Client
 }
 
-// NewRebrickableService creates a new Rebrickable service
 func NewRebrickableService(apiKey string) RebrickableService {
 	return &rebrickableService{
 		apiKey:  apiKey,
 		baseURL: "https://rebrickable.com/api/v3",
-		client:  &http.Client{},
+		client:  &http.Client{Timeout: 15 * time.Second},
 	}
 }
 
-// RebrickableSet represents a set from Rebrickable API
 type RebrickableSet struct {
 	SetNum       string `json:"set_num"`
 	Name         string `json:"name"`
@@ -43,7 +43,6 @@ type RebrickableSet struct {
 	LastModified string `json:"last_modified_dt"`
 }
 
-// RebrickablePart represents a part from Rebrickable API
 type RebrickablePart struct {
 	PartNum      string                 `json:"part_num"`
 	Name         string                 `json:"name"`
@@ -54,7 +53,6 @@ type RebrickablePart struct {
 	PrintOf      string                 `json:"print_of"`
 }
 
-// RebrickableSetPart represents a part in a set from Rebrickable API
 type RebrickableSetPart struct {
 	ID        int              `json:"id"`
 	InvPartID int              `json:"inv_part_id"`
@@ -65,80 +63,11 @@ type RebrickableSetPart struct {
 	NumSets   int              `json:"num_sets"`
 }
 
-// RebrickableColor represents a color from Rebrickable API
 type RebrickableColor struct {
 	ID      int    `json:"id"`
 	Name    string `json:"name"`
 	RGB     string `json:"rgb"`
 	IsTrans bool   `json:"is_trans"`
-}
-
-// GetSet retrieves a set from Rebrickable API
-func (s *rebrickableService) GetSet(setNum string) (*RebrickableSet, error) {
-	url := fmt.Sprintf("%s/lego/sets/%s/?key=%s", s.baseURL, setNum, s.apiKey)
-
-	resp, err := s.client.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch set from Rebrickable: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("rebrickable API returned status %d", resp.StatusCode)
-	}
-
-	var set RebrickableSet
-	if err := json.NewDecoder(resp.Body).Decode(&set); err != nil {
-		return nil, fmt.Errorf("failed to decode set response: %w", err)
-	}
-
-	return &set, nil
-}
-
-// GetSetParts retrieves parts for a set from Rebrickable API
-func (s *rebrickableService) GetSetParts(setNum string) ([]RebrickableSetPart, error) {
-	url := fmt.Sprintf("%s/lego/sets/%s/parts/?page=1&page_size=100000&inc_minifig_parts=1&key=%s", s.baseURL, setNum, s.apiKey)
-
-	resp, err := s.client.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch set parts from Rebrickable: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("rebrickable API returned status %d", resp.StatusCode)
-	}
-
-	var response struct {
-		Results []RebrickableSetPart `json:"results"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode set parts response: %w", err)
-	}
-
-	return response.Results, nil
-}
-
-// GetPart retrieves a part from Rebrickable API
-func (s *rebrickableService) GetPart(partNum string) (*RebrickablePart, error) {
-	url := fmt.Sprintf("%s/lego/parts/%s/?key=%s", s.baseURL, partNum, s.apiKey)
-
-	resp, err := s.client.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch part from Rebrickable: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Rebrickable API returned status %d", resp.StatusCode)
-	}
-
-	var part RebrickablePart
-	if err := json.NewDecoder(resp.Body).Decode(&part); err != nil {
-		return nil, fmt.Errorf("failed to decode part response: %w", err)
-	}
-
-	return &part, nil
 }
 
 type RebrickableSetResponse struct {
@@ -148,36 +77,94 @@ type RebrickableSetResponse struct {
 	Results  []RebrickableSet `json:"results"`
 }
 
+func (s *rebrickableService) GetSet(setNum string) (*RebrickableSet, error) {
+	endpoint := fmt.Sprintf("%s/lego/sets/%s/", s.baseURL, url.PathEscape(setNum))
+	var set RebrickableSet
+	if err := s.getJSON(endpoint, nil, &set); err != nil {
+		return nil, fmt.Errorf("failed to fetch set from Rebrickable: %w", err)
+	}
+	return &set, nil
+}
+
+func (s *rebrickableService) GetSetParts(setNum string) ([]RebrickableSetPart, error) {
+	var all []RebrickableSetPart
+	for page := 1; ; page++ {
+		params := url.Values{}
+		params.Set("page", strconv.Itoa(page))
+		params.Set("page_size", "1000")
+		params.Set("inc_minifig_parts", "1")
+
+		var response struct {
+			Next    *string              `json:"next"`
+			Results []RebrickableSetPart `json:"results"`
+		}
+		endpoint := fmt.Sprintf("%s/lego/sets/%s/parts/", s.baseURL, url.PathEscape(setNum))
+		if err := s.getJSON(endpoint, params, &response); err != nil {
+			return nil, fmt.Errorf("failed to fetch set parts from Rebrickable: %w", err)
+		}
+		all = append(all, response.Results...)
+		if response.Next == nil {
+			break
+		}
+	}
+	return all, nil
+}
+
+func (s *rebrickableService) GetPart(partNum string) (*RebrickablePart, error) {
+	endpoint := fmt.Sprintf("%s/lego/parts/%s/", s.baseURL, url.PathEscape(partNum))
+	var part RebrickablePart
+	if err := s.getJSON(endpoint, nil, &part); err != nil {
+		return nil, fmt.Errorf("failed to fetch part from Rebrickable: %w", err)
+	}
+	return &part, nil
+}
+
 func (s *rebrickableService) SearchSets(searchTerm string, page, pageSize int) (*RebrickableSetResponse, error) {
-	endpoint := fmt.Sprintf("%s/lego/sets/", s.baseURL)
-
 	params := url.Values{}
-	params.Add("search", searchTerm)
-	params.Add("page", fmt.Sprintf("%d", page))
-	params.Add("page_size", fmt.Sprintf("%d", pageSize))
+	params.Set("search", searchTerm)
+	params.Set("page", strconv.Itoa(page))
+	params.Set("page_size", strconv.Itoa(pageSize))
 
-	req, err := http.NewRequest("GET", endpoint+"?"+params.Encode(), nil)
+	var result RebrickableSetResponse
+	if err := s.getJSON(s.baseURL+"/lego/sets/", params, &result); err != nil {
+		return nil, fmt.Errorf("failed to search sets on Rebrickable: %w", err)
+	}
+	return &result, nil
+}
+
+func (s *rebrickableService) getJSON(endpoint string, params url.Values, target any) error {
+	parsed, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	if params != nil {
+		parsed.RawQuery = params.Encode()
 	}
 
+	req, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Authorization", "key "+s.apiKey)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("%w: %v", ErrUpstreamUnavailable, err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return json.NewDecoder(resp.Body).Decode(target)
+	case http.StatusNotFound:
+		return ErrUpstreamNotFound
+	case http.StatusTooManyRequests:
+		return ErrUpstreamRateLimited
+	default:
+		if resp.StatusCode >= 500 {
+			return fmt.Errorf("%w: status %d", ErrUpstreamUnavailable, resp.StatusCode)
+		}
+		return errors.Join(ErrUpstreamUnavailable, fmt.Errorf("status %d", resp.StatusCode))
 	}
-
-	var result RebrickableSetResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
 }
