@@ -1,5 +1,3 @@
-// API Types based on your Go backend
-
 export interface Set {
     id: number;
     set_num: string;
@@ -12,6 +10,9 @@ export interface Set {
     last_modified_dt: string;
     created_at: string;
     updated_at: string;
+    notes: string;
+    storage_location: string;
+    build_status: BuildStatus;
 }
 
 export interface Part {
@@ -32,9 +33,10 @@ export interface SetPart {
     set_id: number;
     part_id: number;
     color_id: number;
+    color_name: string;
+    color_hex: string;
     quantity: number;
     is_spare: boolean;
-    element_id: string;
     created_at: string;
     updated_at: string;
     part?: Part;
@@ -56,15 +58,54 @@ export interface MissingPart {
     part?: Part;
 }
 
-export interface SearchSetsResponse {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: Set[];
+export interface ShoppingListItem {
+    part_id: number;
+    part_num: string;
+    part_name: string;
+    part_img_url: string;
+    part_url: string;
+    color_id: number;
+    color_name: string;
+    color_hex: string;
+    total_quantity: number;
+    set_count: number;
+    set_names: string;
+}
+
+export type BuildStatus = 'not_started' | 'sorting' | 'building' | 'blocked' | 'complete';
+
+export type PhotoType = 'box' | 'instructions' | 'storage' | 'build' | 'other';
+
+export interface SetPhoto {
+    id: number;
+    set_id: number;
+    file_name: string;
+    original_name: string;
+    content_type: string;
+    size_bytes: number;
+    url: string;
+    title: string;
+    photo_type: PhotoType;
+    is_primary: boolean;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface SetWithParts extends Set {
     set_parts?: SetPart[];
+    photos?: SetPhoto[];
+}
+
+export interface UpdateSetNotesRequest {
+    notes: string;
+    storage_location: string;
+    build_status: BuildStatus;
+}
+
+export interface UpdateSetPhotoRequest {
+    title?: string;
+    photo_type?: PhotoType;
+    is_primary?: boolean;
 }
 
 export interface CreateSetRequest {
@@ -79,6 +120,11 @@ export interface AssignMissingPartsRequest {
     }[];
 }
 
+export interface UpdateMissingPartRequest {
+    quantity?: number;
+    notes?: string;
+}
+
 export interface ApiResponse<T> {
     data: T;
     message?: string;
@@ -89,7 +135,6 @@ export interface ApiError {
     details?: string;
 }
 
-// Rebrickable API Types
 export interface RebrickableSet {
     set_num: string;
     name: string;
